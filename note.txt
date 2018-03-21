@@ -1,5 +1,12 @@
 github指令
 
+git config    #查看配置
+git config user.name #查看用户名
+
 
 git branch 		#查看本地分支
 git branch -a   #查看本地和远程 所有分支
+
+
+
+git push origin master #将head中commit好的代码提交到远程服务器上
