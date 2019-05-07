@@ -1,7 +1,29 @@
 @startuml
-Alice -> Bob: Authentication Request
-Bob --> Alice: Authentication Response
+Client --> DNS: 1.域名切换成IP
+DNS --> 网卡: 2.请求服务器
+== 服务器部分 ==
 
-Alice -> Bob: Another authentication Request
-Alice <-- Bob: another authentication Response
+box "服务器内核空间"
+participant 磁盘
+participant 内核Kernel
+participant Buffer
+end box
+
+box "服务器用户空间（Nginx/WebServer）"
+participant WebServer
+participant FastCGI
+participant phpfpm
+end box
+
+网卡 --> 内核Kernel: 3.网卡将请求发送给内核处理
+内核Kernel --> WebServer: 4.请求连接给Nginx 判断是静态资源还是需要使用FCGI 如果需要就需要调用FPM
+WebServer --> 内核Kernel:5.发现需要读取磁盘文件
+内核Kernel --> 磁盘:6.内核调用驱动连接磁盘获取需要的资源
+磁盘 --> Buffer:7.磁盘中的资源copy在缓冲区等待调用
+FastCGI --> phpfpm:通过端口调用进程
+Buffer --> WebServer:8.WebServer获取资源备份到自己进程的缓冲区使用，FPMmaster进行管理，work进行process
+WebServer --> 内核Kernel:9.服务器生成响应 通知内核
+内核Kernel --> 网卡:10.内核将响应数据穿给网卡 让网卡根据socket进行返回
+网卡 --> Client:11.网卡发送响应给用户
+
 @enduml
