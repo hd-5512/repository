@@ -63,16 +63,15 @@ Web服务器要为用户提供服务，必须以某种方式，工作在某个�
 
 通过上面的对连接的处理分析，我们知道工作在用户空间的web服务器进程是无法直接操作IO的，需要通过系统调用进行，其关系如下：
 
-
+![Image text](https://github.com/hd-5512/repository/blob/master/src/IO%E4%B8%8EWebServer%E7%9A%84%E5%B7%A5%E4%BD%9C%E6%96%B9%E5%BC%8F.png)
 
 即进程向内核进行系统调用申请IO，内核将资源从IO调度到内核的buffer中（wait阶段），内核还需将数据从内核buffer中复制（copy阶段）到web服务器进程所在的用户空间，才算完成一次IO调度。这几个阶段都是需要时间的。根据wait和copy阶段的处理等待的机制不同，可将I/O动作分为如下五种模式：
 
-阻塞I/O
-非阻塞I/O
-I/O复用（select和poll）
-信号（事件）驱动I/O（SIGIO）
-异步I/O（aio）
-
+- 阻塞I/O
+- 非阻塞I/O
+- I/O复用（select和poll）
+- 信号（事件）驱动I/O（SIGIO）
+- 异步I/O（aio）
 
 
 #### 3.1 I/O模型简介
@@ -112,37 +111,40 @@ Linux上的前四种I/O模型的“执行”阶段都是同步的，只有最后
 #### 3.2 各I/O模型详细介绍【本部分摘自独孤成博客】：
 ##### 3.2.1 阻塞I/O
 说明：应用程序调用一个IO函数，导致应用程序阻塞，等待数据准备好。 如果数据没有准备好，一直等待数据准备好了，从内核拷贝到用户空间,IO函数返回成功指示。这个不用多解释吧，阻塞套接字。下图是它调用过程的图示： （注，一般网络I/O都是阻塞I/O，客户端发出请求，Web服务器进程响应，在进程没有返回页面之前，这个请求会处于一直等待状态）
+![Image text](https://github.com/hd-5512/repository/blob/master/src/%E9%98%BB%E5%A1%9EIO.png)
 
-
+##### 3.2.2 非阻塞I/O
+我们把一个套接口设置为非阻塞就是告诉内核，当所请求的I/O操作无法完成时，不要将进程睡眠，而是返回一个错误。这样我们的I/O操作函数将不断 的测试数据是否已经准备好，如果没有准备好，继续测试，直到数据准备好为止。在这个不断测试的过程中，会大量的占用CPU的时间，所有一般Web服务器都 不使用这种I/O模型。具体过程如下图:
+![Image text](https://github.com/hd-5512/repository/blob/master/src/%E9%9D%9E%E9%98%BB%E5%A1%9EIO.png)
 
 ##### 3.2.3 I/O复用（select和poll）
 I/O复用模型会用到select或poll函数或epoll函数(Linux2.6以后的内核开始支持)，这两个函数也会使进程阻塞，但是和阻塞 I/O所不同的的，这两个函数可以同时阻塞多个I/O操作。而且可以同时对多个读操作，多个写操作的I/O函数进行检测，直到有数据可读或可写时，才真正 调用I/O操作函数。具体过程如下图:
-
+![Image text](https://github.com/hd-5512/repository/blob/master/src/IO%E5%A4%8D%E7%94%A8.png)
 
 ##### 3.2.4 信号驱动I/O（SIGIO）
 首先，我们允许套接口进行信号驱动I/O，并安装一个信号处理函数，进程继续运行并不阻塞。当数据准备好时，进程会收到一个SIGIO信号，可以在信号处理函数中调用I/O操作函数处理数据。具体过程如下图:
+![Image text](https://github.com/hd-5512/repository/blob/master/src/sigio.jpg)
 
 ##### 3.2.5 异步I/O（aio）
 当一个异步过程调用发出后，调用者不能立刻得到结果。实际处理这个调用的部件在完成后，通过状态、通知和回调来通知调用者的输入输出操作。具体过程如下图:
-
+![Image text](https://github.com/hd-5512/repository/blob/master/src/aio.png)
 #### 3.2.6 I/O 模型总结（如下图）
 io模型
-
+![Image text](https://github.com/hd-5512/repository/blob/master/src/io%E6%A8%A1%E5%9E%8B.png)
 从上图中我们可以看出，可以看出，越往后，阻塞越少，理论上效率也是最优。其五种I/O模型中，前三种属于同步I/O，后两者属于异步I/O。
 
+##### 同步I/O:
+-     阻塞I/O
+-     非阻塞I/O
+-     I/O复用（select和poll）
 
-同步I/O:
-阻塞I/O
-非阻塞I/O
-I/O复用（select和poll）
+##### 异步I/O:
+-     信号驱动I/O（SIGIO） （半异步）
+-     异步I/O（aio） （真正的异步）
 
-异步I/O:
-信号驱动I/O（SIGIO） （半异步）
-异步I/O（aio） （真正的异步）
-
-异步 I/O 和 信号驱动I/O的区别:
-信号驱动 I/O 模式下，内核可以复制的时候通知给我们的应用程序发送SIGIO 消息。
-异步 I/O 模式下，内核在所有的操作都已经被内核操作结束之后才会通知我们的应用程序。
+##### 异步 I/O 和 信号驱动I/O的区别:
+- 信号驱动 I/O 模式下，内核可以复制的时候通知给我们的应用程序发送SIGIO 消息。
+- 异步 I/O 模式下，内核在所有的操作都已经被内核操作结束之后才会通知我们的应用程序。
 
 
 #### 3.3 Linux I/O模型的具体实现[转自孤城博客]
