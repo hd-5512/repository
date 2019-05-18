@@ -1,15 +1,14 @@
 ## Redis结构
-Redis分 RedisSever 和 RedisClient
+Redis有 RedisSever 和 RedisClient
 
 #### redisServer结构
 - redisDb 数据库 是一个数组 默认16个 Db\[0\] Db\[1\] ...
-
-redisClient中redisDb的指针 通过 SELECT 2 来切换数据库 redis\[2\]> ... 
+- redisClient可以通过SELECT指令来修改redisDb的指针进行切换数据库 比如 SELECT 2 => redis\[2\]> ... 
 - dbnum 数据库的数量 默认16
 
 #### redisDb结构
 - dict 字典区域或键空间 就是实际存放数据的地方 里面存放采用的就是hashtable
-- expires 过期时间列表 也是字典结构  key => longlong 精确到毫秒的 过期时间戳 (底层)
+- expires 过期时间列表 也是字典结构  key => long 精确到毫秒的过期时间戳 (底层)
 
 
 #### 过期KEY的清理方案
