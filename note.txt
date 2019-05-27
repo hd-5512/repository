@@ -10,3 +10,9 @@ git branch -a   #查看本地和远程 所有分支
 
 
 git push origin master #将head中commit好的代码提交到远程服务器上
+
+
+
+
+
+octo_tree key .  1b2c1f55fb3e89fb42f4a557faf302af2c891661
