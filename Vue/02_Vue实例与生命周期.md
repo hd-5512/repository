@@ -45,5 +45,50 @@ vm.$watch('a', function (newValue, oldValue) {
 })
 ```
 
-## 生命周期
+## 生命周期以及选项属性
+methods:  封装的方法
+created:   创建实例
+mounted:  DOM加载完成开始渲染
+computed:   计算属性  建议多使用它
+
+```
+var vm = new Vue({
+    el: '#app',
+    data: {
+            message: 'Hello',   // 只有这里有的才是监听绑定的字段   设置默认值
+            a:123
+    },
+    created: function () {
+        console.log('a is: ' + this.a)  // a  is 123   钩子中使用的 this 都是指代 vm 这个实例
+        this.init()                                //执行 methods 中的 init 方法
+        console.log('a is: ' + this.a)  // a  is  456
+    }，
+    methods: {
+        init:function(){
+            this.a = 456
+        },
+        reversedMessage: function () {
+            return this.message.split('').reverse().join('')
+        }
+    }，
+    computed: {
+        reversedMessage: function () {                              // 计算属性的 getter  另外还有setter(即传入参数来手动修改数据的形式)
+          return this.message.split('').reverse().join('')      // computed 对比 methods 中的优势就是 methods 需要调用  而计算属性会自动触发                                                                              
+        }                                                                                // 并且它自己具有缓存的能力  只有在里面 this.data 中的数据发生变化后才会重新计算
+    }
+})
+```
+
+mixins: 混入    合并数据到 data以及methods还有组建中   可以当做是全局变量和方法的设置地点
+
+watch:  对于计算属性中非常复杂 甚至有 异步请求过程时使用
+
+props:  子组件的接受 父组件传入的值
+
+<component   ref="" >   & $ref  父组件通过它 查看子组件的数据
+
+<solt>: 插槽  用于灵活替换组建中的内容
+
+<keep-alive> 
+
 
