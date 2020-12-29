@@ -1,8 +1,6 @@
 ## 范式的概念
 
-
-
-
+   范式的标准是列的唯一性，关联查找是它的实际用例
 
 #### 范式的优点
 
@@ -36,8 +34,9 @@
         WHERE user.accout_type = 'vip' 
         ORDER BY message.published DESC LIMIT 10
         
-        1.Mysql扫描message表中的pulished字段索引获取倒序得消息列表 
-         => 然后对每一条再去user表中检查这个用户是不是 vip 如果只有一小部分是付费账户 这么做的效率就很低
+        1.Mysql先扫描message表中的published字段索引获取倒序得消息列表 
+                => 然后对每一条再去user表中检查这个用户是不是 vip 
+         如果只有一小部分是付费账户 这么做的效率就很低
         
         2.另一种可能是从user表开始，找到所有的付费用户，再获取他们的所有信息并且排序，但这可能更加糟糕
         
